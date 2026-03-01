@@ -40,14 +40,36 @@ export default function LoginPage() {
     setIsDemoLoading(true);
     setError(null);
 
-    const result = await signIn("credentials", {
+    // まずログインを試行
+    let result = await signIn("credentials", {
       email: "demo@aipoweredcall.com",
       password: "demo1234",
       redirect: false,
     });
 
+    // ログイン失敗時はデモアカウントを自動作成してリトライ
     if (result?.error) {
-      setError("デモアカウントが未作成です。管理者にお問い合わせください。");
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: "demo@aipoweredcall.com",
+          password: "demo1234",
+          name: "デモユーザー",
+        }),
+      });
+
+      if (res.ok || res.status === 409) {
+        result = await signIn("credentials", {
+          email: "demo@aipoweredcall.com",
+          password: "demo1234",
+          redirect: false,
+        });
+      }
+    }
+
+    if (result?.error) {
+      setError("デモログインに失敗しました。もう一度お試しください。");
       setIsDemoLoading(false);
     } else {
       window.location.href = "/dashboard/record";
