@@ -49,27 +49,42 @@ export default function LoginPage() {
 
     // ログイン失敗時はデモアカウントを自動作成してリトライ
     if (result?.error) {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: "demo@aipoweredcall.com",
-          password: "demo1234",
-          name: "デモユーザー",
-        }),
-      });
-
-      if (res.ok || res.status === 409) {
-        result = await signIn("credentials", {
-          email: "demo@aipoweredcall.com",
-          password: "demo1234",
-          redirect: false,
+      try {
+        const res = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: "demo@aipoweredcall.com",
+            password: "demo1234",
+            name: "デモユーザー",
+          }),
         });
+
+        if (res.ok || res.status === 409) {
+          result = await signIn("credentials", {
+            email: "demo@aipoweredcall.com",
+            password: "demo1234",
+            redirect: false,
+          });
+        } else {
+          const data = await res.json().catch(() => ({}));
+          setError(
+            `アカウント作成に失敗しました (${res.status}): ${data.error || "不明なエラー"}`
+          );
+          setIsDemoLoading(false);
+          return;
+        }
+      } catch (e) {
+        setError(
+          `通信エラー: ${e instanceof Error ? e.message : "サーバーに接続できません"}`
+        );
+        setIsDemoLoading(false);
+        return;
       }
     }
 
     if (result?.error) {
-      setError("デモログインに失敗しました。もう一度お試しください。");
+      setError(`ログインに失敗しました: ${result.error}`);
       setIsDemoLoading(false);
     } else {
       window.location.href = "/dashboard/record";
