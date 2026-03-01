@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleCredentialLogin = async (e: React.FormEvent) => {
@@ -33,6 +34,24 @@ export default function LoginPage() {
 
   const handleGoogleLogin = () => {
     signIn("google", { callbackUrl: "/dashboard/record" });
+  };
+
+  const handleDemoLogin = async () => {
+    setIsDemoLoading(true);
+    setError(null);
+
+    const result = await signIn("credentials", {
+      email: "demo@aipoweredcall.com",
+      password: "demo1234",
+      redirect: false,
+    });
+
+    if (result?.error) {
+      setError("デモアカウントが未作成です。管理者にお問い合わせください。");
+      setIsDemoLoading(false);
+    } else {
+      window.location.href = "/dashboard/record";
+    }
   };
 
   return (
@@ -93,6 +112,24 @@ export default function LoginPage() {
               {isLoading ? "ログイン中..." : "ログイン"}
             </Button>
           </form>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-gray-500">お試し</span>
+            </div>
+          </div>
+
+          <Button
+            variant="secondary"
+            className="w-full"
+            onClick={handleDemoLogin}
+            disabled={isDemoLoading}
+          >
+            {isDemoLoading ? "ログイン中..." : "デモアカウントでログイン"}
+          </Button>
         </CardContent>
       </Card>
     </div>
